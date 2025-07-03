@@ -4,6 +4,9 @@ project(EchoServer)
 # 设置 C++ 标准
 set(CMAKE_CXX_STANDARD 11)
 
+# 添加 muduo 库的搜索路径
+set(CMAKE_PREFIX_PATH "/c:/Users/33007/Desktop/model/linux/Project/Muduo/muduo/muduo/")
+
 # 查找 muduo 库
 find_package(muduo REQUIRED)
 include_directories(${MUDUO_INCLUDE_DIRS})
