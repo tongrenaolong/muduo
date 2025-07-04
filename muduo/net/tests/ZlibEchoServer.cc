@@ -24,6 +24,7 @@ private:
     void onMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp time) {
         // 解压数据
         Buffer uncompressed;
+        std::cout << "buf buffer data size: " << buf->readableBytes() << std::endl;
         // Bug 修复：将接收到的 buf 传递给 ZlibInputStream 进行解压
         ZlibInputStream inputStream(buf);
         if (!inputStream.write(&uncompressed)) {
