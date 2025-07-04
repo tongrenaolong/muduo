@@ -29,7 +29,22 @@ class ZlibInputStream : noncopyable
   }
 
   bool write(StringPiece buf);
-  bool write(Buffer* input);
+  bool write(Buffer* input)
+  {
+    if (zerror_ != Z_OK) {
+      return false;
+    }
+
+    zstream_.next_in = reinterpret_cast<Bytef*>(input->peek());
+    zstream_.avail_in = static_cast<int>(input->readableBytes());
+
+    while (zstream_.avail_in > 0 && zerror_ == Z_OK) {
+      zerror_ = decompress(Z_NO_FLUSH);
+    }
+
+    input->retrieve(input->readableBytes() - zstream_.avail_in);
+    return zerror_ == Z_OK;
+  }
   bool finish()
   {
     if (zerror_ != Z_OK) {
