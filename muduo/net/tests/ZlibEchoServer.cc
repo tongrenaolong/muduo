@@ -21,30 +21,17 @@ private:
 
     void onMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp time) {
         // 解压数据
-        Buffer uncompressed; 
-        ZlibInputStream inputStream(&uncompressed);
-        if (!inputStream.write(buf)) {
+        Buffer uncompressed;
+        // Bug 修复：将接收到的 buf 传递给 ZlibInputStream 进行解压
+        ZlibInputStream inputStream(buf);
+        if (!inputStream.write(&uncompressed)) {
             LOG_ERROR << "Decompression failed";
             return;
         }
         inputStream.finish();
 
-        // 打印接收到的消息
-        std::cout << "Received from client: " << uncompressed.retrieveAllAsString() << std::endl;
-
-        // 重新压缩数据
-        Buffer compressed; 
-        ZlibOutputStream outputStream(&compressed);
-        // Bug 修复：使用 StringPiece 构造参数调用 write 方法
-        // 修改以确保类型匹配
-        if (!outputStream.write(StringPiece(uncompressed.peek(), static_cast<int>(uncompressed.readableBytes())))) {
-            LOG_ERROR << "Compression failed";
-            return;
-        }
-        outputStream.finish();
-
-        // 回显数据
-        conn->send(&compressed);
+        // 打印接收到的解压缩后的消息
+        std::cout << "Received from client: " << uncompressed.peek() << std::endl;
     }
 
 public:

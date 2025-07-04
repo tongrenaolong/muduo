@@ -19,7 +19,7 @@ private:
             std::cout << "Connected to server, please input message: " << std::endl;
             std::string message;
             std::getline(std::cin, message);
-
+            std::cout << "message: " << message << std::endl;
             // 压缩数据
             Buffer compressed;
             ZlibOutputStream outputStream(&compressed);
@@ -28,6 +28,10 @@ private:
                 return;
             }
             outputStream.finish();
+
+            // 输出 buffer 中的数据
+            std::cout << "Compressed buffer data size: " << compressed.readableBytes() << std::endl;
+            std::cout << "Compressed buffer data (in hex): " << compressed.retrieveAllAsString() << std::endl;
 
             conn->send(&compressed);
         }
