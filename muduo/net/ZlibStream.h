@@ -36,37 +36,21 @@ class ZlibInputStream : noncopyable
       if (zerror_ != Z_OK && zerror_ != Z_STREAM_END) {
           return false;
       }
-      if (output_->readableBytes() == 0) {
-          return false;
-      }
 
       // 设置输入数据
-      zstream_.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(output_->peek()));
-      zstream_.avail_in = static_cast<int>(output_->readableBytes());
+      void* in = const_cast<char*>(output_->peek());
+      // zstream_.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(output_->peek()));
+      zstream_.avail_in = output_->readableBytes();
 
       // 解压循环
-      while (zstream_.avail_in > 0 && (zerror_ == Z_OK || zerror_ == Z_STREAM_END)) {
-          char buffer[1024];
-          zstream_.next_out = reinterpret_cast<Bytef*>(buffer);
-          zstream_.avail_out = sizeof(buffer);
-
+      while (zstream_.avail_in > 0 && zerror_ == Z_OK) {
           zerror_ = decompress(Z_NO_FLUSH);
-          if (zerror_ == Z_OK || zerror_ == Z_STREAM_END) {
-              size_t bytesWritten = sizeof(buffer) - zstream_.avail_out;
-              result.append(buffer, bytesWritten);
-          } else {
-              // 处理错误
-              return false;
-          }
       }
-
-      // 重置状态以支持后续调用
-      if (zerror_ == Z_STREAM_END) {
-          zerror_ = inflateReset(&zstream_);
+      if(zstream_.avail_in == 0){
+        assert(static_cast<const void*>(zstream_.next_in) == output_.beginWrite());
+        zstream_.next_in = NULL;
       }
-
-      output_->retrieveAll();
-      return true;
+      return zerror_ == Z_OK;
   }
 
   bool write(StringPiece buf) {
@@ -115,14 +99,15 @@ class ZlibInputStream : noncopyable
  private:
   int decompress(int flush)
   {
-    output_->ensureWritableBytes(bufferSize_);
+    int buffer_size = 1024;
+    output_->ensureWritableBytes(buffer_size);
     zstream_.next_out = reinterpret_cast<Bytef*>(output_->beginWrite());
     zstream_.avail_out = static_cast<int>(output_->writableBytes());
     int error = ::inflate(&zstream_, flush);
     output_->hasWritten(output_->writableBytes() - zstream_.avail_out);
-    if (output_->writableBytes() == 0 && bufferSize_ < 65536)
+    if (output_->writableBytes() == 0 && buffer_size < 65536)
     {
-      bufferSize_ *= 2;
+      buffer_size *= 2;
     }
     return error;
   }
