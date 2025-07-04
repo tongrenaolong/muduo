@@ -30,7 +30,8 @@ private:
         // 重新压缩数据
         Buffer compressed;
         ZlibOutputStream outputStream(&compressed);
-        if (!outputStream.write(uncompressed.peek(), uncompressed.readableBytes())) {
+        // Bug 修复：使用 StringPiece 构造参数调用 write 方法
+        if (!outputStream.write(StringPiece(uncompressed.peek(), uncompressed.readableBytes()))) {
             LOG_ERROR << "Compression failed";
             return;
         }
