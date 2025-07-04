@@ -2,9 +2,11 @@
 #include "muduo/net/EventLoop.h"
 #include "muduo/net/InetAddress.h"
 #include "muduo/net/Buffer.h"
-#include "muduo/base/Logging.h"
 #include "muduo/net/ZlibStream.h"
+#include "muduo/base/Logging.h"
 
+#define BOOST_TEST_MAIN
+#define BOOST_TEST_DYN_LINK
 using namespace muduo;
 using namespace muduo::net;
 
