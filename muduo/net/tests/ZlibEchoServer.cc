@@ -33,7 +33,7 @@ private:
         inputStream.finish();
 
         // 打印接收到的解压缩后的消息
-        std::cout << "Received from client: " << uncompressed.peek() << std::endl;
+        std::cout << "Received from client: " << uncompressed.retrieveAllAsString() << std::endl;
     }
 
 public:

@@ -32,7 +32,6 @@ private:
 
             // 输出 buffer 中的数据
             std::cout << "Compressed buffer data size: " << compressed.readableBytes() << std::endl;
-            std::cout << "Compressed buffer data (in hex): " << compressed.retrieveAllAsString() << std::endl;
 
             conn->send(&compressed);
         }
