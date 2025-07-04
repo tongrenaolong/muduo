@@ -36,6 +36,7 @@ class ZlibInputStream : noncopyable
     if (zerror_ != Z_OK) {
       return false;
     }
+    puts("----------------");
 
     // 设置输入为 output_ 的数据
     zstream_.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(output_->peek()));
@@ -45,7 +46,9 @@ class ZlibInputStream : noncopyable
       char buffer[1024];
       zstream_.next_out = reinterpret_cast<Bytef*>(buffer);
       zstream_.avail_out = sizeof(buffer);
+      puts("*");
       zerror_ = decompress(Z_NO_FLUSH);
+      puts("-");
       if (zerror_ == Z_OK || zerror_ == Z_STREAM_END) {
         size_t bytesWritten = sizeof(buffer) - zstream_.avail_out;
         result.append(buffer, bytesWritten);
