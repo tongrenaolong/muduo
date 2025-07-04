@@ -30,8 +30,16 @@ class ZlibInputStream : noncopyable
 
   bool write(StringPiece buf);
   bool write(Buffer* input);
-  bool finish();
-    // inflateEnd(&zstream_);
+  bool finish()
+  {
+    if (zerror_ != Z_OK) {
+      return false;
+    }
+    zerror_ = inflateEnd(&zstream_);
+    bool ok = zerror_ == Z_OK;
+    zerror_ = Z_STREAM_END;
+    return ok;
+  }
 
  private:
   int decompress(int flush);
