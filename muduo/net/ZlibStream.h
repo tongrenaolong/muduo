@@ -57,7 +57,14 @@ class ZlibInputStream : noncopyable
   }
 
  private:
-  int decompress(int flush);
+  int decompress(int flush) {
+    output_->ensureWritableBytes(1024);
+    zstream_.next_out = reinterpret_cast<Bytef*>(output_->beginWrite());
+    zstream_.avail_out = static_cast<int>(output_->writableBytes());
+    int result = ::inflate(&zstream_, flush);
+    output_->hasWritten(output_->writableBytes() - zstream_.avail_out);
+    return result;
+  }
 
   Buffer* output_;
   z_stream zstream_;
