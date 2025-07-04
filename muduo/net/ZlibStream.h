@@ -40,19 +40,19 @@ class ZlibInputStream : noncopyable
 
     while (zstream_.avail_in > 0 && zerror_ == Z_OK) {
       // 确保输出缓冲区有足够空间
-      output_.ensureWritableBytes(1024);
-      zstream_.next_out = reinterpret_cast<Bytef*>(output_.beginWrite());
-      zstream_.avail_out = static_cast<int>(output_.writableBytes());
+      output_->ensureWritableBytes(1024);
+      zstream_.next_out = reinterpret_cast<Bytef*>(output_->beginWrite());
+      zstream_.avail_out = static_cast<int>(output_->writableBytes());
       zerror_ = decompress(Z_NO_FLUSH);
       if (zerror_ == Z_OK || zerror_ == Z_STREAM_END) {
         // 更新已写入的数据量
-        output_.hasWritten(zstream_.next_out - reinterpret_cast<Bytef*>(outputBuffer_.beginWrite()));
+        output_->hasWritten(zstream_.next_out - reinterpret_cast<Bytef*>(output_->beginWrite()));
       }
     }
 
     // 将解压后的数据追加到 input 缓冲区
-    input->append(output_.peek(), output_.readableBytes());
-    output_.retrieveAll();
+    input->append(output_->peek(), output_->readableBytes());
+    output_->retrieveAll();
 
     input->retrieve(input->readableBytes() - zstream_.avail_in);
     return zerror_ == Z_OK || zerror_ == Z_STREAM_END;
