@@ -29,6 +29,12 @@ if(ZLIB_FOUND)
   add_executable(zlibstream_unittest ZlibStream_unittest.cc)
   target_link_libraries(zlibstream_unittest muduo_net boost_unit_test_framework z)
   # set_target_properties(zlibstream_unittest PROPERTIES COMPILE_FLAGS "-std=c++0x")
+  
+  add_executable(zlib_echo_server ZlibEchoServer.cpp)
+  target_link_libraries(zlib_echo_server muduo_net z)
+  
+  add_executable(zlib_echo_client ZlibEchoClient.cpp)
+  target_link_libraries(zlib_echo_client muduo_net z)
 endif()
 
 endif()
