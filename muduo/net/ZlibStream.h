@@ -31,33 +31,42 @@ class ZlibInputStream : noncopyable
     finish();
   }
 
-  // 新增方法，将 output_ 中的内容解压到 std::string
   bool decompressToStdString(std::string& result) {
-    if (zerror_ != Z_OK) {
-      return false;
-    }
-    puts("----------------");
-
-    // 设置输入为 output_ 的数据
-    zstream_.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(output_->peek()));
-    zstream_.avail_in = static_cast<int>(output_->readableBytes());
-
-    while (zstream_.avail_in > 0 && zerror_ == Z_OK) {
-      char buffer[1024];
-      zstream_.next_out = reinterpret_cast<Bytef*>(buffer);
-      zstream_.avail_out = sizeof(buffer);
-      puts("*");
-      zerror_ = decompress(Z_NO_FLUSH);
-      puts("-");
-      if (zerror_ == Z_OK || zerror_ == Z_STREAM_END) {
-        size_t bytesWritten = sizeof(buffer) - zstream_.avail_out;
-        result.append(buffer, bytesWritten);
+      // 检查状态和输入数据
+      if (zerror_ != Z_OK && zerror_ != Z_STREAM_END) {
+          return false;
       }
-    }
+      if (output_->readableBytes() == 0) {
+          return false;
+      }
 
-    // 清空 output_ 缓冲区
-    output_->retrieveAll();
-    return zerror_ == Z_OK || zerror_ == Z_STREAM_END;
+      // 设置输入数据
+      zstream_.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(output_->peek()));
+      zstream_.avail_in = static_cast<int>(output_->readableBytes());
+
+      // 解压循环
+      while (zstream_.avail_in > 0 && (zerror_ == Z_OK || zerror_ == Z_STREAM_END)) {
+          char buffer[1024];
+          zstream_.next_out = reinterpret_cast<Bytef*>(buffer);
+          zstream_.avail_out = sizeof(buffer);
+
+          zerror_ = decompress(Z_NO_FLUSH);
+          if (zerror_ == Z_OK || zerror_ == Z_STREAM_END) {
+              size_t bytesWritten = sizeof(buffer) - zstream_.avail_out;
+              result.append(buffer, bytesWritten);
+          } else {
+              // 处理错误
+              return false;
+          }
+      }
+
+      // 重置状态以支持后续调用
+      if (zerror_ == Z_STREAM_END) {
+          zerror_ = inflateReset(&zstream_);
+      }
+
+      output_->retrieveAll();
+      return true;
   }
 
   bool write(StringPiece buf) {

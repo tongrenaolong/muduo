@@ -34,7 +34,7 @@ private:
             outputStream.finish(); 
             // 输出 buffer 中的数据 
             std::cout << "Compressed buffer data size: " << compressed.readableBytes() << std::endl; 
-            std::cout << "message data size: " << message.readableBytes() << std::endl; 
+            std::cout << "tem data size: " << tem.readableBytes() << std::endl; 
             cout << "message: " << message << endl; 
             conn->send(&compressed); 
         } 
