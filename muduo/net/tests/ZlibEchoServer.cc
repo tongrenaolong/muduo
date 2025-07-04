@@ -9,6 +9,8 @@
 #define BOOST_TEST_DYN_LINK
 using namespace muduo;
 using namespace muduo::net;
+#include <iostream>
+using namespace std;
 
 class ZlibEchoServer {
 private:

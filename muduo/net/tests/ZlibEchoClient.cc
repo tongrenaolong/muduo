@@ -5,6 +5,7 @@
 #include "muduo/base/Logging.h"
 #include "muduo/net/ZlibStream.h"
 #include <iostream>
+using namespace std;
 
 using namespace muduo;
 using namespace muduo::net;
