@@ -47,7 +47,7 @@ class ZlibInputStream : noncopyable
       zstream_.avail_out = sizeof(buffer);
       zerror_ = decompress(Z_NO_FLUSH);
       if (zerror_ == Z_OK || zerror_ == Z_STREAM_END) {
-        int bytesWritten = sizeof(buffer) - zstream_.avail_out;
+        size_t bytesWritten = sizeof(buffer) - zstream_.avail_out;
         result.append(buffer, bytesWritten);
       }
     }
@@ -58,6 +58,7 @@ class ZlibInputStream : noncopyable
   }
 
   bool write(StringPiece buf) {
+    return false;
   }
   
   bool write(Buffer* input)
