@@ -31,7 +31,8 @@ private:
         Buffer compressed;
         ZlibOutputStream outputStream(&compressed);
         // Bug 修复：使用 StringPiece 构造参数调用 write 方法
-        if (!outputStream.write(StringPiece(uncompressed.peek(), uncompressed.readableBytes()))) {
+        // 修改以确保类型匹配
+        if (!outputStream.write(StringPiece(uncompressed.peek(), static_cast<int>(uncompressed.readableBytes())))) {
             LOG_ERROR << "Compression failed";
             return;
         }
