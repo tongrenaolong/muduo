@@ -39,15 +39,16 @@ class ZlibInputStream : noncopyable
 
       // 设置输入数据
       void* in = const_cast<char*>(output_->peek());
+      zstream_.next_in = static_cast<Bytef*>(in);
       // zstream_.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(output_->peek()));
-      zstream_.avail_in = output_->readableBytes();
+      zstream_.avail_in = static_cast<int>(output_->readableBytes());
 
       // 解压循环
       while (zstream_.avail_in > 0 && zerror_ == Z_OK) {
           zerror_ = decompress(Z_NO_FLUSH);
       }
       if(zstream_.avail_in == 0){
-        assert(static_cast<const void*>(zstream_.next_in) == output_.beginWrite());
+        assert(static_cast<const void*>(zstream_.next_in) == output_->beginWrite());
         zstream_.next_in = NULL;
       }
       return zerror_ == Z_OK;
