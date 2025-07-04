@@ -33,6 +33,7 @@ private:
         inputStream.finish();
 
         // 打印接收到的解压缩后的消息
+        std::cout << "uncompressed buffer data size: " << uncompressed.readableBytes() << std::endl;
         std::cout << "Received from client: " << uncompressed.retrieveAllAsString() << std::endl;
     }
 
