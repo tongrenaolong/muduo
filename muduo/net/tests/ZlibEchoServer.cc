@@ -21,7 +21,7 @@ private:
 
     void onMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp time) {
         // 解压数据
-        Buffer uncompressed;
+        Buffer uncompressed; 
         ZlibInputStream inputStream(&uncompressed);
         if (!inputStream.write(buf)) {
             LOG_ERROR << "Decompression failed";
@@ -29,8 +29,11 @@ private:
         }
         inputStream.finish();
 
+        // 打印接收到的消息
+        std::cout << "Received from client: " << uncompressed.retrieveAllAsString() << std::endl;
+
         // 重新压缩数据
-        Buffer compressed;
+        Buffer compressed; 
         ZlibOutputStream outputStream(&compressed);
         // Bug 修复：使用 StringPiece 构造参数调用 write 方法
         // 修改以确保类型匹配
@@ -59,7 +62,7 @@ public:
 int main(int argc, char* argv[]) {
     LOG_INFO << "pid = " << getpid();
     EventLoop loop;
-    InetAddress listenAddr(8080);
+    InetAddress listenAddr(8000);
     ZlibEchoServer server(&loop, listenAddr);
     server.start();
     loop.loop();

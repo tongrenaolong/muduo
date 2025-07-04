@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
     }
     LOG_INFO << "pid = " << getpid();
     EventLoop loop;
-    InetAddress serverAddr(argv[1], 8080);
+    InetAddress serverAddr(argv[1], 8000);
     ZlibEchoClient client(&loop, serverAddr);
     client.connect();
     loop.loop();
