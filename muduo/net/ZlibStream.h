@@ -35,7 +35,7 @@ class ZlibInputStream : noncopyable
       return false;
     }
 
-    zstream_.next_in = reinterpret_cast<const Bytef*>(input->peek());
+    zstream_.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(input->peek()));
     zstream_.avail_in = static_cast<int>(input->readableBytes());
 
     while (zstream_.avail_in > 0 && zerror_ == Z_OK) {
