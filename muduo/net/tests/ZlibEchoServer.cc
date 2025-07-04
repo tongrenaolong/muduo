@@ -24,20 +24,16 @@ private:
     void onMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp time) {
         // 解压数据
         Buffer uncompressed;
-        std::cout << "buf buffer data size: " << buf->readableBytes() << std::endl;
-        // Bug 修复：将接收到的 buf 传递给 ZlibInputStream 进行解压
-        ZlibInputStream inputStream(buf);
-        if (!inputStream.write(&uncompressed)) {
+        ZlibInputStream inputStream(&uncompressed);
+        if (!inputStream.write(buf)) {
             LOG_ERROR << "Decompression failed";
             return;
         }
         inputStream.finish();
 
-        // 打印接收到的解压缩后的消息
-        std::cout << "uncompressed buffer data size: " << uncompressed.readableBytes() << std::endl;
-        std::cout << "Received from client: " << uncompressed.retrieveAllAsString() << std::endl;
+        std::cout << "Received from server: " << uncompressed.retrieveAllAsString() << std::endl;
+        conn->shutdown();
     }
-
 public:
     ZlibEchoServer(EventLoop* loop, const InetAddress& listenAddr)
         : loop_(loop), server_(loop, listenAddr, "ZlibEchoServer") {

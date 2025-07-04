@@ -4,6 +4,9 @@
 #include "muduo/net/Buffer.h"
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 #include <zlib.h>
+#include <stdio.h>
+#include <iostream>
+using namespace std;
 
 namespace muduo
 {
@@ -31,6 +34,7 @@ class ZlibInputStream : noncopyable
   bool write(StringPiece buf);
   bool write(Buffer* input)
   {
+    printf("zerror_: %d, Z_OK: %d\n", zerror_,Z_OK );
     if (zerror_ != Z_OK) {
       return false;
     }
@@ -49,7 +53,7 @@ class ZlibInputStream : noncopyable
         output_->hasWritten(zstream_.next_out - reinterpret_cast<Bytef*>(output_->beginWrite()));
       }
     }
-
+    std::cout << "Received from client: " << uncompressed.retrieveAllAsString() << std::endl;
     // 将解压后的数据追加到 input 缓冲区
     input->append(output_->peek(), output_->readableBytes());
     output_->retrieveAll();
