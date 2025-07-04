@@ -15,26 +15,28 @@ private:
     EventLoop* loop_;
     TcpClient client_;
 
-    void onConnection(const TcpConnectionPtr& conn) {
-        if (conn->connected()) {
-            std::cout << "Connected to server, please input message: " << std::endl;
-            std::string message;
-            std::getline(std::cin, message);
-            std::cout << "message: " << message << std::endl;
-            // 压缩数据
-            Buffer compressed;
-            ZlibOutputStream outputStream(&compressed);
-            if (!outputStream.write(message)) {
-                LOG_ERROR << "Compression failed";
-                return;
-            }
-            outputStream.finish();
-
-            // 输出 buffer 中的数据
-            std::cout << "Compressed buffer data size: " << compressed.readableBytes() << std::endl;
-
-            conn->send(&compressed);
-        }
+    void onConnection(const TcpConnectionPtr& conn) { 
+        if (conn->connected()) { 
+            std::cout << "Connected to server, please input message: " << std::endl; 
+            std::string message; 
+            std::getline(std::cin, message); 
+            std::cout << "message: " << message << std::endl; 
+            // 压缩数据 
+            Buffer compressed; 
+            ZlibOutputStream outputStream(&compressed); 
+            // 将 message 写入 Buffer tem 中 
+            Buffer tem; 
+            tem.append(message.data(), message.size());
+            if (!outputStream.write(message)) { 
+                LOG_ERROR << "Compression failed"; 
+                return; 
+            } 
+            outputStream.finish(); 
+            // 输出 buffer 中的数据 
+            std::cout << "Compressed buffer data size: " << compressed.readableBytes() << std::endl; 
+            cout << "message: " << message << endl; 
+            conn->send(&compressed); 
+        } 
     }
 
     void onMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp time) {

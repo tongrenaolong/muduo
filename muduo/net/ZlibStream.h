@@ -31,7 +31,35 @@ class ZlibInputStream : noncopyable
     finish();
   }
 
-  bool write(StringPiece buf);
+  // 新增方法，将 output_ 中的内容解压到 std::string
+  bool decompressToStdString(std::string& result) {
+    if (zerror_ != Z_OK) {
+      return false;
+    }
+
+    // 设置输入为 output_ 的数据
+    zstream_.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(output_->peek()));
+    zstream_.avail_in = static_cast<int>(output_->readableBytes());
+
+    while (zstream_.avail_in > 0 && zerror_ == Z_OK) {
+      char buffer[1024];
+      zstream_.next_out = reinterpret_cast<Bytef*>(buffer);
+      zstream_.avail_out = sizeof(buffer);
+      zerror_ = decompress(Z_NO_FLUSH);
+      if (zerror_ == Z_OK || zerror_ == Z_STREAM_END) {
+        int bytesWritten = sizeof(buffer) - zstream_.avail_out;
+        result.append(buffer, bytesWritten);
+      }
+    }
+
+    // 清空 output_ 缓冲区
+    output_->retrieveAll();
+    return zerror_ == Z_OK || zerror_ == Z_STREAM_END;
+  }
+
+  bool write(StringPiece buf) {
+  }
+  
   bool write(Buffer* input)
   {
     printf("zerror_: %d, Z_OK: %d\n", zerror_,Z_OK );
@@ -53,7 +81,6 @@ class ZlibInputStream : noncopyable
         output_->hasWritten(zstream_.next_out - reinterpret_cast<Bytef*>(output_->beginWrite()));
       }
     }
-    std::cout << "Received from client: " << uncompressed.retrieveAllAsString() << std::endl;
     // 将解压后的数据追加到 input 缓冲区
     input->append(output_->peek(), output_->readableBytes());
     output_->retrieveAll();

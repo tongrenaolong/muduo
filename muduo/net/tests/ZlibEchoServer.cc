@@ -23,15 +23,14 @@ private:
 
     void onMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp time) {
         // 解压数据
-        Buffer uncompressed;
-        ZlibInputStream inputStream(&uncompressed);
-        if (!inputStream.write(buf)) {
+        ZlibInputStream inputStream(buf);
+        string message;
+        if (!inputStream.decompressToStdString(message)) {
             LOG_ERROR << "Decompression failed";
             return;
         }
         inputStream.finish();
-
-        std::cout << "Received from server: " << uncompressed.retrieveAllAsString() << std::endl;
+        std::cout << "Received from server: " << message << std::endl;
         conn->shutdown();
     }
 public:
