@@ -31,18 +31,15 @@ class ZlibInputStream : noncopyable
     finish();
   }
 
-  bool decompressToStdString(std::string& result) {
-      // 检查状态和输入数据
+  bool write(StringPiece buf) {
       if (zerror_ != Z_OK && zerror_ != Z_STREAM_END) {
           return false;
       }
 
-      // 设置输入数据
       void* in = const_cast<char*>(output_->peek());
       zstream_.next_in = static_cast<Bytef*>(in);
       zstream_.avail_in = static_cast<int>(output_->readableBytes());
 
-      // 解压循环
       while (zstream_.avail_in > 0 && zerror_ == Z_OK) {
           zerror_ = decompress(Z_NO_FLUSH);
       }
@@ -53,49 +50,37 @@ class ZlibInputStream : noncopyable
       return zerror_ == Z_OK;
   }
 
-  bool write(StringPiece buf) {
-    return false;
-  }
-  
   bool write(Buffer* input)
   {
-    printf("zerror_: %d, Z_OK: %d\n", zerror_,Z_OK );
     if (zerror_ != Z_OK) {
       return false;
     }
 
-    zstream_.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(input->peek()));
-    zstream_.avail_in = static_cast<int>(input->readableBytes());
+    void* in = const_cast<char*>(output_->peek());
+    zstream_.next_in = static_cast<Bytef*>(in);
+    zstream_.avail_in = static_cast<int>(output_->readableBytes());
 
     while (zstream_.avail_in > 0 && zerror_ == Z_OK) {
-      // 确保输出缓冲区有足够空间
-      output_->ensureWritableBytes(1024);
-      zstream_.next_out = reinterpret_cast<Bytef*>(output_->beginWrite());
-      zstream_.avail_out = static_cast<int>(output_->writableBytes());
       zerror_ = decompress(Z_NO_FLUSH);
-      if (zerror_ == Z_OK || zerror_ == Z_STREAM_END) {
-        // 更新已写入的数据量
-        output_->hasWritten(zstream_.next_out - reinterpret_cast<Bytef*>(output_->beginWrite()));
-      }
     }
-    // 将解压后的数据追加到 input 缓冲区
-    input->append(output_->peek(), output_->readableBytes());
-    output_->retrieveAll();
-
     input->retrieve(input->readableBytes() - zstream_.avail_in);
-    return zerror_ == Z_OK || zerror_ == Z_STREAM_END;
+    return zerror_ == Z_OK;
   }
+  
   bool finish()
   {
-    if (zerror_ != Z_OK) {
+    if (zerror_ != Z_OK)
       return false;
+
+    while (zerror_ == Z_OK)
+    {
+      zerror_ = decompress(Z_FINISH);
     }
     zerror_ = inflateEnd(&zstream_);
     bool ok = zerror_ == Z_OK;
     zerror_ = Z_STREAM_END;
     return ok;
   }
-
  private:
   int decompress(int flush)
   {
