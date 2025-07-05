@@ -32,7 +32,7 @@ class ZlibInputStream : noncopyable
   int zlibErrorCode() const { return zerror_; }
   bool write(StringPiece buf)
   {
-    if (zerror_ != Z_OK)
+    if (zerror_ != Z_OK && zerror_ != Z_STREAM_END)
       return false;
 
     assert(zstream_.next_in == NULL && zstream_.avail_in == 0);
@@ -48,13 +48,13 @@ class ZlibInputStream : noncopyable
       assert(static_cast<const void*>(zstream_.next_in) == buf.end());
       zstream_.next_in = NULL;
     }
-    return zerror_ == Z_OK;
+    return zerror_ == Z_OK || zerror_ == Z_STREAM_END;
   }
 
   // compress input as much as possible, not guarantee consuming all data.
   bool write(Buffer* input)
   {
-    if (zerror_ != Z_OK)
+    if (zerror_ != Z_OK && zerror_ != Z_STREAM_END)
       return false;
 
     void* in = const_cast<char*>(input->peek());
@@ -65,16 +65,15 @@ class ZlibInputStream : noncopyable
       zerror_ = decompress(Z_NO_FLUSH);
     }
     input->retrieve(input->readableBytes() - zstream_.avail_in);
-    std::cout << zerror_ << std::endl;
-    return zerror_ == Z_OK;
+    return zerror_ == Z_OK || zerror_ == Z_STREAM_END;
   }
   bool finish()
   {
-    if (zerror_ != Z_OK) {
+    if (zerror_ != Z_OK  && zerror_ != Z_STREAM_END) {
       return false;
     }
     zerror_ = inflateEnd(&zstream_);
-    bool ok = zerror_ == Z_OK;
+    bool ok = (zerror_ == Z_OK  || zerror_ == Z_STREAM_END);
     zerror_ = Z_STREAM_END;
     return ok;
   }
@@ -128,7 +127,7 @@ class ZlibOutputStream : noncopyable
 
   bool write(StringPiece buf)
   {
-    if (zerror_ != Z_OK)
+    if (zerror_ != Z_OK && zerror_ != Z_STREAM_END)
       return false;
 
     assert(zstream_.next_in == NULL && zstream_.avail_in == 0);
@@ -144,13 +143,13 @@ class ZlibOutputStream : noncopyable
       assert(static_cast<const void*>(zstream_.next_in) == buf.end());
       zstream_.next_in = NULL;
     }
-    return zerror_ == Z_OK;
+    return zerror_ == Z_OK || zerror_ == Z_STREAM_END;
   }
 
   // compress input as much as possible, not guarantee consuming all data.
   bool write(Buffer* input)
   {
-    if (zerror_ != Z_OK)
+    if (zerror_ != Z_OK && zerror_ != Z_STREAM_END)
       return false;
 
     void* in = const_cast<char*>(input->peek());
@@ -161,12 +160,12 @@ class ZlibOutputStream : noncopyable
       zerror_ = compress(Z_NO_FLUSH);
     }
     input->retrieve(input->readableBytes() - zstream_.avail_in);
-    return zerror_ == Z_OK;
+    return zerror_ == Z_OK || zerror_ == Z_STREAM_END;
   }
 
   bool finish()
   {
-    if (zerror_ != Z_OK)
+    if (zerror_ != Z_OK && zerror_ != Z_STREAM_END)
       return false;
 
     while (zerror_ == Z_OK)
