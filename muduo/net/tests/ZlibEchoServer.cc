@@ -23,15 +23,14 @@ private:
 
     void onMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp time) {
         // 解压数据
-        ZlibInputStream inputStream(buf);
-        string message;
-        if (!inputStream.decompressToStdString(message)) {
+        Buffer decompressed;
+        ZlibInputStream inputStream(&decompressed);
+        // 将外部数据加压保存在内部 
+        if (!inputStream.write(buf)) {
             LOG_ERROR << "Decompression failed";
             return;
         }
         inputStream.finish();
-        std::cout << "Received from server: " << message << std::endl;
-        conn->shutdown();
     }
 public:
     ZlibEchoServer(EventLoop* loop, const InetAddress& listenAddr)
