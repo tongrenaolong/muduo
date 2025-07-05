@@ -4,8 +4,6 @@
 #include "muduo/net/Buffer.h"
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 #include <zlib.h>
-#include <iostream>
-using namespace std;
 
 namespace muduo
 {
