@@ -82,32 +82,38 @@ BOOST_AUTO_TEST_CASE(testZlibOutputStream5)
   {
     BOOST_CHECK(stream.write(input));
   }
-  printf("bufsiz %d\n", stream.internalOutputBufferSize());
-  LOG_INFO << "total_in " << stream.inputBytes();
-  LOG_INFO << "total_out " << stream.outputBytes();
+  // printf("bufsiz %d\n", stream.internalOutputBufferSize());
+  // LOG_INFO << "total_in " << stream.inputBytes();
+  // LOG_INFO << "total_out " << stream.outputBytes();
   stream.finish();
-  printf("total %zd\n", output.readableBytes());
+  // printf("total %zd\n", output.readableBytes());
   BOOST_CHECK_EQUAL(stream.zlibErrorCode(), Z_STREAM_END);
 }
 
 
 BOOST_AUTO_TEST_CASE(testZlibInputStream) {
-  muduo::net::Buffer input;
-  muduo::net::Buffer output;
+  muduo::net::Buffer input;// zlib_data
+  muduo::net::Buffer output;// data
   {
     muduo::net::ZlibOutputStream outStream(&input);
     outStream.write("Hello, Zlib!");
     outStream.finish();
   }
-
-  muduo::net::ZlibInputStream inStream(&input);
+  muduo::net::ZlibInputStream inStream(&output);
   std::string result;
+  // inStream.write(&input);
+  // std::cout << "readableBytes: " << output.readableBytes() << std::endl;
+  // std::cout << output.peek() << std::endl;
   while (inStream.zlibErrorCode() == Z_OK) {
-    muduo::net::Buffer temp;
-    if (inStream.read(&temp)) {
-      result.append(temp.peek(), temp.readableBytes());
+    puts("-----");
+    std::cout << inStream.write(&input) << std::endl;
+    if (inStream.write(&input)) {
+      result.append(output.peek(), output.readableBytes());
     }
+    std::cout << output.peek() << std::endl;
+    puts("-----");
   }
+  std::cout << result << std::endl;
   BOOST_CHECK_EQUAL(result, "Hello, Zlib!");
 }
 
@@ -115,7 +121,7 @@ BOOST_AUTO_TEST_CASE(testZlibInputStreamEmpty) {
   muduo::net::Buffer input;
   muduo::net::ZlibInputStream inStream(&input);
   muduo::net::Buffer output;
-  BOOST_CHECK(!inStream.read(&output));
+  BOOST_CHECK(!inStream.write(&output));
   BOOST_CHECK_EQUAL(output.readableBytes(), 0);
 }
 
@@ -136,7 +142,7 @@ BOOST_AUTO_TEST_CASE(testZlibInputStreamLargeData) {
   std::string result;
   while (inStream.zlibErrorCode() == Z_OK) {
     muduo::net::Buffer temp;
-    if (inStream.read(&temp)) {
+    if (inStream.write(&temp)) {
       result.append(temp.peek(), temp.readableBytes());
     }
   }

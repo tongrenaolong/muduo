@@ -4,6 +4,8 @@
 #include "muduo/net/Buffer.h"
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 #include <zlib.h>
+#include <iostream>
+using namespace std;
 
 namespace muduo
 {
@@ -27,54 +29,44 @@ class ZlibInputStream : noncopyable
   {
     finish();
   }
+  int zlibErrorCode() const { return zerror_; }
+  bool write(StringPiece buf)
+  {
+    if (zerror_ != Z_OK)
+      return false;
 
-  bool decompressToStdString(std::string& result) {
-      if (zerror_ != Z_OK && zerror_ != Z_STREAM_END) {
-          return false;
-      }
-
-      void* in = const_cast<char*>(output_->peek());
-      zstream_.next_in = static_cast<Bytef*>(in);
-      zstream_.avail_in = static_cast<int>(output_->readableBytes());
-
-      while (zstream_.avail_in > 0 && zerror_ == Z_OK) {
-          zerror_ = decompress(Z_NO_FLUSH);
-      }
-      if(zstream_.avail_in == 0){
-        assert(static_cast<const void*>(zstream_.next_in) == output_->beginWrite());
-        zstream_.next_in = NULL;
-      }
-      return zerror_ == Z_OK;
+    assert(zstream_.next_in == NULL && zstream_.avail_in == 0);
+    void* in = const_cast<char*>(buf.data());
+    zstream_.next_in = static_cast<Bytef*>(in);
+    zstream_.avail_in = buf.size();
+    while (zstream_.avail_in > 0 && zerror_ == Z_OK)
+    {
+      zerror_ = decompress(Z_NO_FLUSH);
+    }
+    if (zstream_.avail_in == 0)
+    {
+      assert(static_cast<const void*>(zstream_.next_in) == buf.end());
+      zstream_.next_in = NULL;
+    }
+    return zerror_ == Z_OK;
   }
 
-  bool write(StringPiece buf) {
-    return false;
-  }
-  
+  // compress input as much as possible, not guarantee consuming all data.
   bool write(Buffer* input)
   {
-    printf("zerror_: %d, Z_OK: %d\n", zerror_,Z_OK );
-    if (zerror_ != Z_OK) {
+    if (zerror_ != Z_OK)
       return false;
-    }
 
-    zstream_.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(input->peek()));
+    void* in = const_cast<char*>(input->peek());
+    zstream_.next_in = static_cast<Bytef*>(in);
     zstream_.avail_in = static_cast<int>(input->readableBytes());
-
-    while (zstream_.avail_in > 0 && zerror_ == Z_OK) {
-      output_->ensureWritableBytes(1024);
-      zstream_.next_out = reinterpret_cast<Bytef*>(output_->beginWrite());
-      zstream_.avail_out = static_cast<int>(output_->writableBytes());
+    if (zstream_.avail_in > 0 && zerror_ == Z_OK)
+    {
       zerror_ = decompress(Z_NO_FLUSH);
-      if (zerror_ == Z_OK || zerror_ == Z_STREAM_END) {
-        output_->hasWritten(zstream_.next_out - reinterpret_cast<Bytef*>(output_->beginWrite()));
-      }
     }
-    input->append(output_->peek(), output_->readableBytes());
-    output_->retrieveAll();
-
     input->retrieve(input->readableBytes() - zstream_.avail_in);
-    return zerror_ == Z_OK || zerror_ == Z_STREAM_END;
+    std::cout << zerror_ << std::endl;
+    return zerror_ == Z_OK;
   }
   bool finish()
   {
