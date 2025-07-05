@@ -28,13 +28,80 @@ class ZlibInputStream : noncopyable
     finish();
   }
 
-  bool write(StringPiece buf);
-  bool write(Buffer* input);
-  bool finish();
-    // inflateEnd(&zstream_);
+  bool decompressToStdString(std::string& result) {
+      if (zerror_ != Z_OK && zerror_ != Z_STREAM_END) {
+          return false;
+      }
+
+      void* in = const_cast<char*>(output_->peek());
+      zstream_.next_in = static_cast<Bytef*>(in);
+      zstream_.avail_in = static_cast<int>(output_->readableBytes());
+
+      while (zstream_.avail_in > 0 && zerror_ == Z_OK) {
+          zerror_ = decompress(Z_NO_FLUSH);
+      }
+      if(zstream_.avail_in == 0){
+        assert(static_cast<const void*>(zstream_.next_in) == output_->beginWrite());
+        zstream_.next_in = NULL;
+      }
+      return zerror_ == Z_OK;
+  }
+
+  bool write(StringPiece buf) {
+    return false;
+  }
+  
+  bool write(Buffer* input)
+  {
+    printf("zerror_: %d, Z_OK: %d\n", zerror_,Z_OK );
+    if (zerror_ != Z_OK) {
+      return false;
+    }
+
+    zstream_.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(input->peek()));
+    zstream_.avail_in = static_cast<int>(input->readableBytes());
+
+    while (zstream_.avail_in > 0 && zerror_ == Z_OK) {
+      output_->ensureWritableBytes(1024);
+      zstream_.next_out = reinterpret_cast<Bytef*>(output_->beginWrite());
+      zstream_.avail_out = static_cast<int>(output_->writableBytes());
+      zerror_ = decompress(Z_NO_FLUSH);
+      if (zerror_ == Z_OK || zerror_ == Z_STREAM_END) {
+        output_->hasWritten(zstream_.next_out - reinterpret_cast<Bytef*>(output_->beginWrite()));
+      }
+    }
+    input->append(output_->peek(), output_->readableBytes());
+    output_->retrieveAll();
+
+    input->retrieve(input->readableBytes() - zstream_.avail_in);
+    return zerror_ == Z_OK || zerror_ == Z_STREAM_END;
+  }
+  bool finish()
+  {
+    if (zerror_ != Z_OK) {
+      return false;
+    }
+    zerror_ = inflateEnd(&zstream_);
+    bool ok = zerror_ == Z_OK;
+    zerror_ = Z_STREAM_END;
+    return ok;
+  }
 
  private:
-  int decompress(int flush);
+  int decompress(int flush)
+  {
+    int buffer_size = 1024;
+    output_->ensureWritableBytes(buffer_size);
+    zstream_.next_out = reinterpret_cast<Bytef*>(output_->beginWrite());
+    zstream_.avail_out = static_cast<int>(output_->writableBytes());
+    int error = ::inflate(&zstream_, flush);
+    output_->hasWritten(output_->writableBytes() - zstream_.avail_out);
+    if (output_->writableBytes() == 0 && buffer_size < 65536)
+    {
+      buffer_size *= 2;
+    }
+    return error;
+  }
 
   Buffer* output_;
   z_stream zstream_;
