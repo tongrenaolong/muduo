@@ -101,11 +101,11 @@ class ZlibInputStream : noncopyable
   {
     int buffer_size = 1024;
     output_->ensureWritableBytes(buffer_size);
-    zstream_.next_out = reinterpret_cast<Bytef*>(output_->peek());
-    zstream_.avail_out = static_cast<int>(output_->readableBytes());
+    zstream_.next_out = reinterpret_cast<Bytef*>(output_->beginWrite());
+    zstream_.avail_out = static_cast<int>(output_->writableBytes());
     int error = ::inflate(&zstream_, flush);
-    output_->hasWritten(output_->readableBytes() - zstream_.avail_out);
-    if (output_->readableBytes() == 0 && buffer_size < 65536)
+    output_->hasWritten(output_->writableBytes() - zstream_.avail_out);
+    if (output_->writableBytes() == 0 && buffer_size < 65536)
     {
       buffer_size *= 2;
     }
