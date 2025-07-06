@@ -206,6 +206,9 @@ void EventLoop::cancel(TimerId timerId)
 
 void EventLoop::updateChannel(Channel* channel)
 {
+  std::cout << "Thread ID: " << muduo::CurrentThread::tid() << " "
+            << "Channel Address: " << channel << " "
+            << std::endl;
   assert(channel->ownerLoop() == this);
   assertInLoopThread();
   poller_->updateChannel(channel);
