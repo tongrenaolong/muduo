@@ -17,6 +17,9 @@
 
 #include <algorithm>
 
+#include <iostream>
+using namespace std;
+
 #include <signal.h>
 #include <sys/eventfd.h>
 #include <unistd.h>
@@ -159,9 +162,6 @@ void EventLoop::runInLoop(Functor cb)
     queueInLoop(std::move(cb));
   }
 }
-
-#include <iostream>
-using namespace std;
 
 void EventLoop::queueInLoop(Functor cb)
 {
