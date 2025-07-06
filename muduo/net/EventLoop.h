@@ -105,7 +105,7 @@ class EventLoop : noncopyable
   void removeChannel(Channel* channel);
   bool hasChannel(Channel* channel);
 
-  // pid_t threadId() const { return threadId_; }
+  pid_t threadId() const { return threadId_; }
   void assertInLoopThread()
   {
     if (!isInLoopThread())
