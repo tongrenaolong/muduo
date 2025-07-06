@@ -30,6 +30,8 @@ EventLoopThreadPool::~EventLoopThreadPool()
   // Don't delete loop, it's stack variable
 }
 
+#include <iostream>
+
 void EventLoopThreadPool::start(const ThreadInitCallback& cb)
 {
   assert(!started_);
@@ -63,6 +65,7 @@ EventLoop* EventLoopThreadPool::getNextLoop()
   {
     // round-robin
     loop = loops_[next_];
+    std::cout << "EventLoopThreadPool::next_: " << next_ << std::endl;
     ++next_;
     if (implicit_cast<size_t>(next_) >= loops_.size())
     {

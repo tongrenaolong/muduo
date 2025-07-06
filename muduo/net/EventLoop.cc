@@ -158,6 +158,9 @@ void EventLoop::runInLoop(Functor cb)
   }
 }
 
+#include <iostream>
+using namespace std;
+
 void EventLoop::queueInLoop(Functor cb)
 {
   std::cout << "Loop Address: " << this << ", Thread ID: " << CurrentThread::tid() << std::endl;
@@ -168,6 +171,7 @@ void EventLoop::queueInLoop(Functor cb)
 
   if (!isInLoopThread() || callingPendingFunctors_)
   {
+    puts("------ wakeup ------");
     wakeup();
   }
 }
