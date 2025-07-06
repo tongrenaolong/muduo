@@ -35,8 +35,10 @@ int main()
   EventLoop loop;
   assert(EventLoop::getEventLoopOfCurrentThread() == &loop);
 
-  Thread thread(threadFunc);
-  thread.start();
-
+  // Thread thread(threadFunc);
+  // thread.start();
+  loop.runInLoop([](){
+    printf("runInLoop(): pid = %d, tid = %d\n", getpid(), CurrentThread::tid());
+  });
   loop.loop();
 }

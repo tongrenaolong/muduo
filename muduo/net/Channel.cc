@@ -53,7 +53,7 @@ void Channel::tie(const std::shared_ptr<void>& obj)
 void Channel::update()
 {
   addedToLoop_ = true;
-  loop_->updateChannel(this);
+  loop_->updateChannel(this);// 在这里加入事件循环进行监控
 }
 
 void Channel::remove()
