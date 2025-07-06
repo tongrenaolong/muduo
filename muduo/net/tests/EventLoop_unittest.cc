@@ -35,10 +35,11 @@ int main()
   EventLoop loop;
   assert(EventLoop::getEventLoopOfCurrentThread() == &loop);
 
-  // Thread thread(threadFunc);
-  // thread.start();
-  loop.runInLoop([](){
-    printf("runInLoop(): pid = %d, tid = %d\n", getpid(), CurrentThread::tid());
-  });
+  Thread thread(threadFunc);
+  thread.start();
+  // loop.runInLoop([](){
+  //   printf("runInLoop(): pid = %d, tid = %d\n", getpid(), CurrentThread::tid());
+  // });
+  // 判断为当前线程，直接执行;如果不为当前线程，将函数存储起来，等到当前线程的时候再执行
   loop.loop();
 }

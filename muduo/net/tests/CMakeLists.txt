@@ -47,6 +47,12 @@ endif()
 
 endif()
 
+add_executable(tcpechoserver_unittest TcpEchoServer.cc)
+target_link_libraries(tcpechoserver_unittest muduo_net)
+
+add_executable(tcpechoclient_unittest TcpEchoClient.cc)
+target_link_libraries(tcpechoclient_unittest muduo_net)
+
 add_executable(tcpclient_reg1 TcpClient_reg1.cc)
 target_link_libraries(tcpclient_reg1 muduo_net)
 

@@ -102,6 +102,7 @@ EventLoop::~EventLoop()
 
 void EventLoop::loop()
 {
+  // 只要线程能醒来，一定是接收 epoll 监听到了消息，一定是在对应的线程中
   assert(!looping_);
   assertInLoopThread();
   looping_ = true;
@@ -126,7 +127,7 @@ void EventLoop::loop()
     }
     currentActiveChannel_ = NULL;
     eventHandling_ = false;
-    doPendingFunctors();
+    doPendingFunctors();// 执行需要执行的任务函数
   }
 
   LOG_TRACE << "EventLoop " << this << " stop looping";
@@ -233,7 +234,9 @@ void EventLoop::abortNotInLoopThread()
 
 void EventLoop::wakeup()
 {
+  // 唤醒本 eventloop 对应的线程
   uint64_t one = 1;
+  // 激活对应线程中的文件描述符
   ssize_t n = sockets::write(wakeupFd_, &one, sizeof one);
   if (n != sizeof one)
   {

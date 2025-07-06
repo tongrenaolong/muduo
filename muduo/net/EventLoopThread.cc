@@ -46,7 +46,7 @@ EventLoop* EventLoopThread::startLoop()
     MutexLockGuard lock(mutex_);
     while (loop_ == NULL)
     {
-      cond_.wait();
+      cond_.wait();// 线程启动会阻塞在cond_.wait()
     }
     loop = loop_;
   }
