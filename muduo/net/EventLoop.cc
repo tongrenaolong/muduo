@@ -105,6 +105,8 @@ void EventLoop::loop()
   // 只要线程能醒来，一定是接收 epoll 监听到了消息，一定是在对应的线程中
   assert(!looping_);
   assertInLoopThread();
+  std::cout << "Thread ID: " << CurrentThread::tid() << " "
+            << "EventLoop Address: " << this << std::endl;
   looping_ = true;
   quit_ = false;  // FIXME: what if someone calls quit() before loop() ?
   LOG_TRACE << "EventLoop " << this << " start looping";
