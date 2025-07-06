@@ -2,6 +2,7 @@
 #include "muduo/net/EventLoop.h"
 #include "muduo/net/InetAddress.h"
 #include <iostream>
+#include "muduo/base/CurrentThread.h"
 
 using namespace muduo;
 using namespace muduo::net;
@@ -16,8 +17,13 @@ void onConnection(const TcpConnectionPtr& conn) {
 }
 
 void onMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp time) {
+    std::cout << "Thread ID: " << muduo::CurrentThread::tid() << " "
+              << "Thread ID: " << conn->getLoop()->threadId() << " "
+              << ", Loop Address: " << conn->getLoop() << std::endl;
     std::string msg(buf->retrieveAllAsString());
     std::cout << "Received from server: " << msg << std::endl;
+    getchar();
+    conn->send(msg);
 }
 
 int main() {
