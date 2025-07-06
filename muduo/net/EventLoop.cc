@@ -160,9 +160,10 @@ void EventLoop::runInLoop(Functor cb)
 
 void EventLoop::queueInLoop(Functor cb)
 {
+  std::cout << "Loop Address: " << this << ", Thread ID: " << CurrentThread::tid() << std::endl;
   {
-  MutexLockGuard lock(mutex_);
-  pendingFunctors_.push_back(std::move(cb));
+    MutexLockGuard lock(mutex_);
+    pendingFunctors_.push_back(std::move(cb));
   }
 
   if (!isInLoopThread() || callingPendingFunctors_)
